@@ -1,0 +1,8 @@
+# Directory for temporary uploads and generated HTML documents.
+data_dir = "/Volumes/RAM-Disk/text2html"
+
+# HTTP port.
+port = 8080
+
+# Maximum words allowed in each generated paragraph.
+max_paragraph_words = 300
