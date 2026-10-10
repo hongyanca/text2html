@@ -12,7 +12,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"unicode/utf8"
 )
 
 //go:embed web/*
@@ -148,12 +147,8 @@ func (a *application) run(j *job) {
 		j.fail("Could not read uploaded file")
 		return
 	}
-	if !utf8.Valid(b) {
-		j.fail("The uploaded file is not valid UTF-8")
-		return
-	}
 	set("Detecting paragraphs", 40)
-	paragraphs := detectParagraphs(string(b))
+	paragraphs := detectParagraphs(decodeText(b))
 	set("Splitting long paragraphs", 60)
 	paragraphs = splitLongParagraphs(paragraphs, a.maxParagraphWords)
 	set("Generating HTML", 80)

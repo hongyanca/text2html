@@ -1,6 +1,6 @@
 # Text to HTML
 
-A small Go web application that accepts a plain-text upload and produces a standalone HTML5 document. Source text is escaped before it is written into paragraph elements, so uploaded markup is displayed as text.
+A small Go web application that accepts a plain-text upload and produces a standalone HTML5 document. UTF-8 files are supported, and invalid UTF-8 byte sequences are decoded as Western Windows-1252. Source text is escaped before it is written into paragraph elements, so uploaded markup is displayed as text.
 
 ## Requirements
 

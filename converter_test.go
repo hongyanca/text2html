@@ -79,3 +79,12 @@ func TestHTMLAndEdgeCases(t *testing.T) {
 		t.Fatalf("not escaped: %s", out)
 	}
 }
+
+func TestDecodeTextWindows1252AndUTF8(t *testing.T) {
+	if got := decodeText([]byte{0x63, 0x61, 0x66, 0xe9, 0x20, 0x80}); got != "café €" {
+		t.Fatalf("Windows-1252 decode = %q", got)
+	}
+	if got := decodeText([]byte("Zażółć 世界")); got != "Zażółć 世界" {
+		t.Fatalf("UTF-8 changed: %q", got)
+	}
+}

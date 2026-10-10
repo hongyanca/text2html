@@ -4,7 +4,31 @@ import (
 	"html"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 )
+
+var windows1252High = [32]rune{
+	'\u20ac', '\u0081', '\u201a', '\u0192', '\u201e', '\u2026', '\u2020', '\u2021',
+	'\u02c6', '\u2030', '\u0160', '\u2039', '\u0152', '\u008d', '\u017d', '\u008f',
+	'\u0090', '\u2018', '\u2019', '\u201c', '\u201d', '\u2022', '\u2013', '\u2014',
+	'\u02dc', '\u2122', '\u0161', '\u203a', '\u0153', '\u009d', '\u017e', '\u0178',
+}
+
+func decodeText(data []byte) string {
+	if utf8.Valid(data) {
+		return strings.TrimPrefix(string(data), "\uFEFF")
+	}
+	var decoded strings.Builder
+	decoded.Grow(len(data))
+	for _, b := range data {
+		r := rune(b)
+		if b >= 0x80 && b <= 0x9f {
+			r = windows1252High[b-0x80]
+		}
+		decoded.WriteRune(r)
+	}
+	return decoded.String()
+}
 
 func detectParagraphs(input string) []string {
 	s := strings.ReplaceAll(strings.ReplaceAll(input, "\r\n", "\n"), "\r", "\n")
@@ -105,7 +129,7 @@ func toHTML(title string, paragraphs []string) string {
 	var b strings.Builder
 	b.WriteString("<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>")
 	b.WriteString(html.EscapeString(title))
-	b.WriteString("</title>\n<style>body { font-family: Georgia, serif; font-size: 1.2em; }</style>\n</head>\n<body>\n")
+	b.WriteString("</title>\n<style>body { font-family: Arial, Helvetica, sans-serif; font-size: 1.05em; padding-left: 2em; padding-right: 2em; }</style>\n</head>\n<body>\n")
 	for i, p := range paragraphs {
 		if i > 0 {
 			b.WriteByte('\n')
