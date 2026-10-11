@@ -23,6 +23,7 @@ const retention = 24 * time.Hour
 type job struct {
 	mu                                                     sync.RWMutex
 	id, filename, sourcePath, outputPath, errorText, stage string
+	preserveBytes                                          bool
 	progress                                               int
 	done                                                   bool
 	updated                                                time.Time
@@ -113,7 +114,7 @@ func (a *application) convert(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Upload is too large or could not be read", 400)
 		return
 	}
-	j := &job{id: id, filename: outName, sourcePath: src, outputPath: dst, stage: "Reading file", progress: 15, updated: time.Now()}
+	j := &job{id: id, filename: outName, sourcePath: src, outputPath: dst, stage: "Reading file", progress: 15, updated: time.Now(), preserveBytes: r.FormValue("encoding") == "preserve"}
 	a.mu.Lock()
 	a.jobs[id] = j
 	a.mu.Unlock()
@@ -148,7 +149,7 @@ func (a *application) run(j *job) {
 		return
 	}
 	set("Detecting paragraphs", 40)
-	paragraphs := detectParagraphs(decodeText(b))
+	paragraphs := detectParagraphs(decodeUploadedText(b, j.preserveBytes))
 	set("Splitting long paragraphs", 60)
 	paragraphs = splitLongParagraphs(paragraphs, a.maxParagraphWords)
 	set("Generating HTML", 80)
@@ -265,7 +266,11 @@ func (a *application) result(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Result is not ready", http.StatusConflict)
 		return
 	}
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if j.preserveBytes {
+		w.Header().Set("Content-Type", "text/html")
+	} else {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	}
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	if parts[1] == "download" {
 		w.Header().Set("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": j.filename}))

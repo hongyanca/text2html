@@ -12,20 +12,17 @@ h1 { margin: 0; font-size: clamp(27px, 6vw, 36px); letter-spacing: -.04em; line-
 .drop-zone small { margin-top: 7px; color: #879390; }
 .file-icon { width: 42px; height: 48px; border-radius: 8px; display: grid; place-items: center; color: #147b68; background: #e5f4ef; font-size: 11px; font-weight: 800; }
 .text-button { appearance: none; border: 0; padding: 0; background: none; color: #117b67; cursor: pointer; font: inherit; text-decoration: underline; }
+.encoding-setting { display: grid; gap: 7px; margin-top: 16px; color: #566562; font-size: 14px; }
+.encoding-setting select { width: 100%; border: 1px solid #d3dfdb; border-radius: 8px; padding: 10px; background: white; color: inherit; font: inherit; }
 .convert { width: 100%; margin-top: 18px; border: 0; border-radius: 10px; padding: 14px; background: #137e68; color: white; font: inherit; font-weight: 700; cursor: pointer; }
 .convert:hover:not(:disabled) { background: #0d6957; }
 .convert:disabled { background: #b7c6c2; cursor: not-allowed; }
+.convert:disabled[data-mode="converting"] { background: #137e68; color: white; cursor: progress; }
 .error { color: #a93232; background: #fff1f0; padding: 10px 12px; border-radius: 8px; font-size: 14px; }
-.progress-panel, .result { margin-top: 22px; padding-top: 20px; border-top: 1px solid #edf0ef; }
-.progress-heading { display: flex; justify-content: space-between; font-size: 14px; font-weight: 700; }
-.track { height: 8px; margin-top: 11px; background: #e9efed; overflow: hidden; border-radius: 20px; }
-.bar { width: 0; height: 100%; background: #14826c; border-radius: inherit; transition: width .2s; }
-#status-message { color: #74817e; font-size: 13px; margin: 9px 0 0; }
+.result { margin-top: 22px; padding-top: 20px; border-top: 1px solid #edf0ef; }
 .result { color: #155e4f; }
 .result-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .result a { color: #117b67; font-size: 14px; font-weight: 650; }
-.result a.open-result-button { display: block; width: 100%; margin-top: 14px; border-radius: 10px; padding: 14px; background: #137e68; color: white; font: inherit; font-weight: 700; text-align: center; text-decoration: none; }
-.result a.open-result-button:hover { background: #0d6957; }
 .cleanup-row { margin-top: 12px; display: flex; flex-direction: column; gap: 10px; align-items: stretch; }
 .delete-button { width: 100%; border: 0; border-radius: 10px; padding: 14px; background: #9b4b4b; color: white; font: inherit; font-weight: 700; cursor: pointer; }
 .delete-button:hover:not(:disabled) { background: #823c3c; }

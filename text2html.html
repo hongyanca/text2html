@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Text to HTML</title>
+  <style>
+    :root { color-scheme: light; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #172127; background: #f4f7f6; }
+    * { box-sizing: border-box; }
+    body { min-height: 100vh; margin: 0; display: grid; place-items: center; padding: 24px; }
+    .card { width: min(100%, 560px); background: #fff; border: 1px solid #e2e9e7; border-radius: 20px; padding: 40px; box-shadow: 0 18px 60px #203a3210; }
+    .eyebrow { margin: 0 0 12px; color: #14826c; font-size: 12px; font-weight: 800; letter-spacing: .13em; }
+    h1 { margin: 0; font-size: clamp(27px, 6vw, 36px); letter-spacing: -.04em; line-height: 1.14; }
+    .intro { color: #68777b; line-height: 1.55; margin: 14px 0 26px; }
+    .drop-zone { min-height: 204px; border: 1.5px dashed #b8cbc5; background: #f9fbfa; border-radius: 14px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px; color: #63716e; outline: none; transition: background .15s, border-color .15s, transform .15s; }
+    .drop-zone.dragover, .drop-zone:focus-visible { border-color: #14826c; background: #edf8f4; }
+    .drop-zone.dragover { transform: scale(1.01); }
+    .drop-zone strong { color: #243330; font-size: 15px; }
+    .drop-zone small { margin-top: 7px; color: #879390; }
+    .file-icon { width: 42px; height: 48px; border-radius: 8px; display: grid; place-items: center; color: #147b68; background: #e5f4ef; font-size: 11px; font-weight: 800; }
+    .text-button { appearance: none; border: 0; padding: 0; background: none; color: #117b67; cursor: pointer; font: inherit; text-decoration: underline; }
+    .settings { display: flex; align-items: center; gap: 10px; margin-top: 16px; color: #566562; font-size: 14px; }
+    .settings input { width: 78px; border: 1px solid #d3dfdb; border-radius: 8px; padding: 8px; font: inherit; }
+    .encoding-setting { display: grid; gap: 7px; margin-top: 16px; color: #566562; font-size: 14px; }
+    .encoding-setting select { width: 100%; border: 1px solid #d3dfdb; border-radius: 8px; padding: 10px; background: white; color: inherit; font: inherit; }
+    .convert, .delete-button { width: 100%; border: 0; border-radius: 10px; padding: 14px; color: white; font: inherit; font-weight: 700; cursor: pointer; }
+    .convert { margin-top: 18px; background: #137e68; }
+    .convert:hover:not(:disabled) { background: #0d6957; }
+    .convert:disabled { background: #b7c6c2; cursor: not-allowed; }
+    .error { color: #a93232; background: #fff1f0; padding: 10px 12px; border-radius: 8px; font-size: 14px; }
+    .progress-panel, .result { margin-top: 22px; padding-top: 20px; border-top: 1px solid #edf0ef; }
+    .progress-heading { display: flex; justify-content: space-between; font-size: 14px; font-weight: 700; }
+    .track { height: 8px; margin-top: 11px; background: #e9efed; overflow: hidden; border-radius: 20px; }
+    .bar { width: 0; height: 100%; background: #14826c; border-radius: inherit; transition: width .2s; }
+    #status-message { color: #74817e; font-size: 13px; margin: 9px 0 0; }
+    .result { color: #155e4f; }
+    .result-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .result a { color: #117b67; font-size: 14px; font-weight: 650; }
+    .result a.open-result-button { display: block; width: 100%; margin-top: 14px; border-radius: 10px; padding: 14px; background: #137e68; color: white; font: inherit; font-weight: 700; text-align: center; text-decoration: none; }
+    .result a.open-result-button:hover { background: #0d6957; }
+    .memory-note { margin: 11px 0 0; color: #74817e; font-size: 12px; line-height: 1.5; }
+    .cleanup-row { margin-top: 12px; }
+    .delete-button { background: #9b4b4b; }
+    .delete-button:hover:not(:disabled) { background: #823c3c; }
+    .delete-button:disabled { opacity: .65; cursor: wait; }
+    #cleanup-message { min-height: 1em; color: #74817e; font-size: 13px; margin: 8px 0 0; }
+    @media (max-width: 520px) { .card { padding: 28px 22px; } }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <p class="eyebrow">TEXT2HTML</p>
+    <h1>Turn plain text into HTML</h1>
+    <p class="intro">Choose a .txt file and we’ll format its paragraphs into a clean HTML document.</p>
+    <form id="convert-form">
+      <input id="file-input" type="file" accept=".txt,text/plain" hidden>
+      <div id="drop-zone" class="drop-zone" tabindex="0" role="button" aria-label="Choose or drop a text file">
+        <div class="file-icon">TXT</div>
+        <strong>Drop your text file here</strong>
+        <span>or <button id="browse" type="button" class="text-button">browse files</button></span>
+        <small id="file-name">Only .txt files, up to 5 MB</small>
+      </div>
+      <label class="encoding-setting" for="encoding">Source encoding
+        <select id="encoding">
+          <option value="auto">Automatic (UTF-8, then Windows-1252)</option>
+          <option value="preserve">Other encoding (preserve bytes for browser decoding)</option>
+        </select>
+        <small>For other encodings, keep source bytes unchanged, then choose the encoding manually in the browser.</small>
+      </label>
+      <label class="settings" for="max-words">Maximum words per paragraph
+        <input id="max-words" type="number" min="1" max="10000" value="300" required>
+      </label>
+      <p id="error" class="error" role="alert" hidden></p>
+      <button id="convert" class="convert" type="submit" disabled>Convert to HTML</button>
+    </form>
+    <section id="progress-panel" class="progress-panel" aria-live="polite" hidden>
+      <div class="progress-heading"><span id="stage">Reading file</span><span id="percent">0%</span></div>
+      <div class="track"><div id="bar" class="bar"></div></div>
+      <p id="status-message">Preparing to read the file…</p>
+    </section>
+    <section id="result" class="result" hidden>
+      <div class="result-header"><strong>Your HTML is ready</strong><a id="download-link">Download HTML</a></div>
+      <a id="open-link" class="open-result-button" target="_blank" rel="noopener">Open generated HTML</a>
+      <p class="memory-note">The open link uses temporary browser memory. Download the file to keep it after closing this page.</p>
+    </section>
+    <div class="cleanup-row">
+      <button id="delete-generated" type="button" class="delete-button" disabled>Clear generated HTML</button>
+      <p id="cleanup-message" role="status">Clears the temporary result from this page.</p>
+    </div>
+  </main>
+  <script>
+    (() => {
+      const input = document.querySelector('#file-input');
+      const zone = document.querySelector('#drop-zone');
+      const browse = document.querySelector('#browse');
+      const form = document.querySelector('#convert-form');
+      const convertButton = document.querySelector('#convert');
+      const deleteButton = document.querySelector('#delete-generated');
+      const error = document.querySelector('#error');
+      let selectedFile = null;
+      let objectURL = null;
+
+      function chooseFile(file) {
+        error.hidden = true;
+        if (!file) return;
+        if (!file.name.toLowerCase().endsWith('.txt')) {
+          selectedFile = null;
+          convertButton.disabled = true;
+          error.textContent = 'Please choose a .txt file.';
+          error.hidden = false;
+          return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          selectedFile = null;
+          convertButton.disabled = true;
+          error.textContent = 'The file must be 5 MB or smaller.';
+          error.hidden = false;
+          return;
+        }
+        selectedFile = file;
+        convertButton.disabled = false;
+        document.querySelector('#file-name').textContent = `${file.name} · ${(file.size / 1024).toFixed(1)} KB`;
+      }
+
+      function decodeText(bytes) {
+        try {
+          return new TextDecoder('utf-8', { fatal: true }).decode(bytes).replace(/^\uFEFF/, '');
+        } catch {
+          return new TextDecoder('windows-1252').decode(bytes);
+        }
+      }
+
+      function bytesToBinaryString(bytes) {
+        const chunkSize = 0x8000;
+        let binary = '';
+        for (let start = 0; start < bytes.length; start += chunkSize) {
+          const chunk = bytes.subarray(start, Math.min(start + chunkSize, bytes.length));
+          let piece = '';
+          for (let i = 0; i < chunk.length; i++) piece += String.fromCharCode(chunk[i]);
+          binary += piece;
+        }
+        return binary;
+      }
+
+      function encodeHTMLPreservingSourceBytes(html) {
+        const bytes = [];
+        const encoder = new TextEncoder();
+        for (const character of html) {
+          const codePoint = character.codePointAt(0);
+          if (codePoint <= 0xff) {
+            bytes.push(codePoint);
+          } else {
+            bytes.push(...encoder.encode(character));
+          }
+        }
+        return new Uint8Array(bytes);
+      }
+
+      function detectParagraphs(text) {
+        const lines = text.replace(/\r\n?/g, '\n').split('\n');
+        const paragraphs = [];
+        let current = [];
+        const flush = () => {
+          const paragraph = current.join(' ').trim();
+          if (paragraph) paragraphs.push(paragraph);
+          current = [];
+        };
+        for (const rawLine of lines) {
+          const line = rawLine.trim();
+          if (!line) {
+            flush();
+            continue;
+          }
+          const previous = current[current.length - 1] || '';
+          if (current.length && /[.!?]$/.test(previous)) flush();
+          current.push(line);
+        }
+        flush();
+        return paragraphs;
+      }
+
+      function wordCount(text) {
+        const matches = text.match(/\S+/gu);
+        return matches ? matches.length : 0;
+      }
+
+      function splitLongParagraphs(paragraphs, limit) {
+        const output = [];
+        for (let paragraph of paragraphs) {
+          while (wordCount(paragraph) > limit) {
+            const words = [...paragraph.matchAll(/\S+/gu)];
+            let boundary = words[limit].index;
+            const lastPeriod = paragraph.slice(0, boundary).lastIndexOf('.');
+            if (lastPeriod >= 0 && (lastPeriod + 1 === paragraph.length || /\s/u.test(paragraph[lastPeriod + 1]))) {
+              boundary = lastPeriod + 1;
+            }
+            if (boundary <= 0) boundary = words[limit].index;
+            output.push(paragraph.slice(0, boundary));
+            paragraph = paragraph.slice(boundary);
+          }
+          if (paragraph.trim()) output.push(paragraph);
+        }
+        return output;
+      }
+
+      function escapeHTML(text) {
+        return text.replace(/[&<>"']/g, character => ({
+          '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        })[character]);
+      }
+
+      function createHTML(title, paragraphs) {
+        const safeTitle = escapeHTML(title);
+        const body = paragraphs.map(paragraph => `<p>${escapeHTML(paragraph)}</p>`).join('\n');
+        return `<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<title>${safeTitle}</title>\n<style>body { font-family: Georgia, serif; font-size: 1.3em; padding-left: 2em; padding-right: 2em; }</style>\n</head>\n<body>\n${body}\n</body>\n</html>\n`;
+      }
+
+      function setProgress(value, stage, message) {
+        document.querySelector('#bar').style.width = `${value}%`;
+        document.querySelector('#percent').textContent = `${value}%`;
+        document.querySelector('#stage').textContent = stage;
+        document.querySelector('#status-message').textContent = message;
+      }
+
+      const nextPaint = () => new Promise(resolve => requestAnimationFrame(resolve));
+      const cleanFilename = fileName => fileName.split(/[\\/]/).pop().replace(/[\u0000-\u001f]/g, '').trim();
+
+      browse.addEventListener('click', () => input.click());
+      zone.addEventListener('click', event => { if (event.target !== browse) input.click(); });
+      zone.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); input.click(); }
+      });
+      input.addEventListener('change', () => chooseFile(input.files[0]));
+      for (const eventName of ['dragenter', 'dragover']) zone.addEventListener(eventName, event => {
+        event.preventDefault(); zone.classList.add('dragover');
+      });
+      for (const eventName of ['dragleave', 'drop']) zone.addEventListener(eventName, event => {
+        event.preventDefault(); zone.classList.remove('dragover');
+      });
+      zone.addEventListener('drop', event => chooseFile(event.dataTransfer.files[0]));
+
+      form.addEventListener('submit', async event => {
+        event.preventDefault();
+        if (!selectedFile) return;
+        const limit = Number.parseInt(document.querySelector('#max-words').value, 10);
+        if (!Number.isInteger(limit) || limit < 1 || limit > 10000) {
+          error.textContent = 'Maximum words per paragraph must be between 1 and 10,000.';
+          error.hidden = false;
+          return;
+        }
+        convertButton.disabled = true;
+        error.hidden = true;
+        document.querySelector('#result').hidden = true;
+        document.querySelector('#progress-panel').hidden = false;
+        try {
+          setProgress(10, 'Reading file', 'Reading and decoding your file…');
+          await nextPaint();
+          const sourceBytes = new Uint8Array(await selectedFile.arrayBuffer());
+          const preserveBytes = document.querySelector('#encoding').value === 'preserve';
+          const text = preserveBytes ? bytesToBinaryString(sourceBytes) : decodeText(sourceBytes);
+          setProgress(30, 'Detecting paragraphs', 'Analyzing blank lines and wrapped text…');
+          await nextPaint();
+          const paragraphs = detectParagraphs(text);
+          setProgress(55, 'Splitting long paragraphs', `Applying the ${limit}-word limit…`);
+          await nextPaint();
+          const chunks = splitLongParagraphs(paragraphs, limit);
+          setProgress(80, 'Generating HTML', 'Building the escaped HTML document…');
+          await nextPaint();
+          const safeName = cleanFilename(selectedFile.name);
+          const htmlName = /\.txt$/i.test(safeName) ? safeName.replace(/\.txt$/i, '.html') : `${safeName || 'converted'}.html`;
+          const html = createHTML(htmlName, chunks);
+          if (objectURL) URL.revokeObjectURL(objectURL);
+          const output = preserveBytes ? encodeHTMLPreservingSourceBytes(html) : html;
+          objectURL = URL.createObjectURL(new Blob([output], { type: preserveBytes ? 'text/html' : 'text/html;charset=utf-8' }));
+          const openLink = document.querySelector('#open-link');
+          openLink.href = objectURL;
+          document.querySelector('#download-link').href = objectURL;
+          document.querySelector('#download-link').download = htmlName;
+          document.querySelector('#progress-panel').hidden = false;
+          setProgress(100, 'Complete', 'Conversion complete. Open or download the generated file.');
+          document.querySelector('#result').hidden = false;
+          deleteButton.disabled = false;
+          document.querySelector('#cleanup-message').textContent = 'Clears the temporary result from this page.';
+        } catch (conversionError) {
+          error.textContent = `Conversion failed: ${conversionError.message}`;
+          error.hidden = false;
+        } finally {
+          convertButton.disabled = !selectedFile;
+        }
+      });
+
+      deleteButton.addEventListener('click', () => {
+        if (objectURL) URL.revokeObjectURL(objectURL);
+        objectURL = null;
+        document.querySelector('#result').hidden = true;
+        deleteButton.disabled = true;
+        document.querySelector('#cleanup-message').textContent = 'Temporary generated HTML cleared.';
+      });
+
+      window.addEventListener('pagehide', () => { if (objectURL) URL.revokeObjectURL(objectURL); });
+    })();
+  </script>
+</body>
+</html>

@@ -30,6 +30,13 @@ func decodeText(data []byte) string {
 	return decoded.String()
 }
 
+func decodeUploadedText(data []byte, preserveBytes bool) string {
+	if preserveBytes {
+		return string(data)
+	}
+	return decodeText(data)
+}
+
 func detectParagraphs(input string) []string {
 	s := strings.ReplaceAll(strings.ReplaceAll(input, "\r\n", "\n"), "\r", "\n")
 	if strings.TrimSpace(s) == "" {

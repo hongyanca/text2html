@@ -87,4 +87,8 @@ func TestDecodeTextWindows1252AndUTF8(t *testing.T) {
 	if got := decodeText([]byte("Zażółć 世界")); got != "Zażółć 世界" {
 		t.Fatalf("UTF-8 changed: %q", got)
 	}
+	raw := []byte{0x82, 0xa0, 0x81, 0x40}
+	if got := decodeUploadedText(raw, true); got != string(raw) {
+		t.Fatalf("preserve mode changed source bytes: % x", []byte(got))
+	}
 }

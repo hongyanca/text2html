@@ -9,7 +9,6 @@
 <body>
   <main class="card">
     <p class="eyebrow">TEXT2HTML</p>
-    <h1>Turn plain text into HTML</h1>
     <p class="intro">Choose a .txt file and we’ll format its paragraphs into a clean HTML document.</p>
     <form id="convert-form">
       <input id="file-input" type="file" accept=".txt,text/plain" hidden>
@@ -19,17 +18,18 @@
         <span>or <button id="browse" type="button" class="text-button">browse files</button></span>
         <small id="file-name">Only .txt files, up to 5 MB</small>
       </div>
+      <label class="encoding-setting" for="encoding">Source encoding
+        <select id="encoding" name="encoding">
+          <option value="auto">Automatic (UTF-8, then Windows-1252)</option>
+          <option value="preserve">Other encoding (preserve bytes for browser decoding)</option>
+        </select>
+        <small>For other encodings, keep source bytes unchanged, then choose the encoding manually in the browser.</small>
+      </label>
       <p id="error" class="error" role="alert" hidden></p>
-      <button id="convert" class="convert" type="submit" disabled>Convert to HTML</button>
+      <button id="convert" class="convert" type="submit" data-mode="convert" aria-live="polite" disabled>Convert to HTML</button>
     </form>
-    <section id="progress-panel" class="progress-panel" aria-live="polite" hidden>
-      <div class="progress-heading"><span id="stage">Uploading</span><span id="percent">0%</span></div>
-      <div class="track"><div id="bar" class="bar"></div></div>
-      <p id="status-message">Preparing upload…</p>
-    </section>
     <section id="result" class="result" hidden>
       <div class="result-header"><strong>Your HTML is ready</strong><a id="download-link">Download HTML</a></div>
-      <a id="open-link" class="open-result-button" target="_blank" rel="noopener">Open generated HTML</a>
     </section>
     <div class="cleanup-row">
       <button id="delete-generated" type="button" class="delete-button">Delete all generated HTML files</button>
